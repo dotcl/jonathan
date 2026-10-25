@@ -10,6 +10,14 @@
                 :foldable-keywords-to-read-p))
 (in-package :jonathan-test.decode)
 
+(defun code-point-string (code)
+  (if (and (>= code #x10000) (< char-code-limit #x110000))
+      (let ((v (- code #x10000)))
+        (coerce (list (code-char (+ #xd800 (ash v -10)))
+                      (code-char (+ #xdc00 (logand v #x3ff))))
+                'string))
+      (string (code-char code))))
+
 (diag "jonathan-test.decode")
 
 (plan 35)
@@ -283,9 +291,8 @@
   (is (parse "\"\\u30b8\\u30e7\\u30ca\\u30b5\\u30f3\"")
       "ジョナサン"
       "T: without surrogate pair.")
-  #+(or :sbcl :clisp :ccl)
   (is (parse "\"\\uD840\\uDC0B\"")
-      "𠀋"
+      (code-point-string #x2000B)
       "T: with surrogate pair.")
   (is (parse "\"\\uD83D\\uDE3E\\uD83D\\uDD2A\"")
       (concatenate 'string
